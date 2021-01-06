@@ -20,10 +20,10 @@ import torchvision.transforms as transforms
 import torchvision.datasets as datasets
 import torch.nn as nn
 from PIL import Image
-import loss
+
 import evaluation as eva
 import net
-
+import loss
 
 parser = argparse.ArgumentParser(description='PyTorch Training')
 parser.add_argument('data', help='path to dataset')
@@ -71,6 +71,7 @@ def RGB2BGR(im):
     return Image.merge('RGB', (b, g, r))
 
 
+
 def main():
     args = parser.parse_args()
 
@@ -103,6 +104,9 @@ def main():
             normalize,
         ]))
 
+    # print(train_dataset[0][0].shape)
+    # print(train_dataset[0])
+    # assert 0
     train_loader = torch.utils.data.DataLoader(
         train_dataset, batch_size=args.batch_size, shuffle=True,
         num_workers=args.workers, pin_memory=True)
@@ -126,10 +130,13 @@ def main():
         # train for one epoch
         train(train_loader, model, criterion, optimizer, args)
 
-    # evaluate on validation set
-    nmi, recall = validate(test_loader, model, args)
-    print('Recall@1, 2, 4, 8: {recall[0]:.3f}, {recall[1]:.3f}, {recall[2]:.3f}, {recall[3]:.3f}; NMI: {nmi:.3f} \n'
-                  .format(recall=recall, nmi=nmi))
+        # evaluate on validation set
+        nmi, recall = validate(test_loader, model, args)
+        print('Recall@1, 2, 4, 8: {recall[0]:.3f}, {recall[1]:.3f}, {recall[2]:.3f}, {recall[3]:.3f}; NMI: {nmi:.3f} \n'
+                      .format(recall=recall, nmi=nmi))
+        torch.save(model.state_dict(),
+                   '/home/ljdong/PycharmProjects/SiameseNetwork/SoftTriple/model/cars196_' + str(
+                       epoch) + '.pth')
 
 
 def train(train_loader, model, criterion, optimizer, args):
@@ -144,17 +151,13 @@ def train(train_loader, model, criterion, optimizer, args):
         if args.gpu is not None:
             input = input.cuda(args.gpu, non_blocking=True)
         target = target.cuda(args.gpu, non_blocking=True)
-
         # compute output
         output = model(input)
         loss = criterion(output, target)
-
         # compute gradient and do SGD step
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-
-
 def validate(test_loader, model, args):
     # switch to evaluation mode
     model.eval()

@@ -7,14 +7,14 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.model_zoo as model_zoo
 
-
+import torch.hub as hub
 __all__ = ['BNInception', 'bninception']
 
 pretrained_settings = {
     'bninception': {
         'imagenet': {
             # Was ported using python2 (may trigger warning)
-            'url': 'http://data.lip6.fr/cadene/pretrainedmodels/bn_inception-52deb4733.pth',
+            'model': '/home/ljdong/data/cars196/bn_inception-52deb4733.pth',
             'input_space': 'BGR',
             'input_size': [3, 224, 224],
             'input_range': [0, 255],
@@ -494,6 +494,7 @@ class BNInception(nn.Module):
         return x
 
 
+
 def bninception(dim=64, pretrained='imagenet'):
     r"""BNInception model architecture from <https://arxiv.org/pdf/1502.03167.pdf>`_ paper.
     """
@@ -501,12 +502,11 @@ def bninception(dim=64, pretrained='imagenet'):
     if pretrained is not None:
         settings = pretrained_settings['bninception'][pretrained]
         model_dict = model.state_dict()
-        pretrained_dict = model_zoo.load_url(settings['url'])
+        pretrained_dict = torch.load(settings['model'])
         pretrained_dict = {k: v for k, v in pretrained_dict.items() if k in model_dict}
         model_dict.update(pretrained_dict)
         model.load_state_dict(model_dict)
     return model
-
 
 if __name__ == '__main__':
 
